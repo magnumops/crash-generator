@@ -1,0 +1,3 @@
+[submodule "vendor/logos"]
+	path = vendor/logos
+	url = https://github.com/magnumops/logos.git
