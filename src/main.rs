@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::path::Path;
 
 #[derive(Parser)]
@@ -29,8 +29,7 @@ enum Commands {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    // Определяем путь к виртуальному окружению
-    // Предполагаем, что бинарник запускается из корня crash-generator
+    // Путь к python в venv
     let venv_python = "./venv/bin/python3";
     
     if !Path::new(venv_python).exists() {
@@ -46,8 +45,8 @@ fn main() -> anyhow::Result<()> {
             let mut child = Command::new(venv_python)
                 .args(&["-m", "logos.proxies.binance_proxy"])
                 .env("PORT", port.to_string())
-                .current_dir("./vendor/logos") // Запускаем из контекста подмодуля
-                .env("PYTHONPATH", ".")        // Чтобы Python видел пакет logos
+                .current_dir("./vendor/logos")
+                .env("PYTHONPATH", ".")
                 .spawn()?;
 
             child.wait()?;
@@ -56,14 +55,13 @@ fn main() -> anyhow::Result<()> {
             println!("[MAGNUM] initializing PATHOLOGIST...");
             println!("[MAGNUM] Examining evidence: {}", file);
             
-            // Нам нужно передать абсолютный путь к файлу, так как мы меняем workdir
             let abs_path = std::fs::canonicalize(&file).unwrap_or_else(|_| Path::new(&file).to_path_buf());
             
+            // Внимание: Передаем файл как аргумент командной строки для Python
             let status = Command::new(venv_python)
-                .args(&["-m", "logos.forensic_delegator"])
+                .args(&["-m", "logos.forensic_delegator", abs_path.to_str().unwrap()])
                 .current_dir("./vendor/logos")
                 .env("PYTHONPATH", ".")
-                .arg(format!("csv_path={}", abs_path.display())) # Передадим аргументом (нужно доработать python, но пока так)
                 .status()?;
                 
             if !status.success() {
