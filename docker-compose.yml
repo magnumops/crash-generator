@@ -1,0 +1,25 @@
+services:
+  # Сервис Атаки (Генератор Крахов)
+  crash-generator:
+    build: .
+    ports:
+      - "8080:8080"
+    command: ["crash", "--port", "8080"]
+    networks:
+      - logos-net
+
+  # Сервис Анализа (Патологоанатом)
+  pathologist:
+    build: .
+    volumes:
+      # Монтируем текущую папку, чтобы магнум видел CSV файлы
+      - ./:/data
+    working_dir: /data
+    # Пример использования: docker compose run pathologist analyze --file /data/victim_log.csv
+    command: ["help"] 
+    networks:
+      - logos-net
+
+networks:
+  logos-net:
+    driver: bridge
