@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use std::process::Command;
 use std::path::Path;
+use std::fs;
 
 #[derive(Parser)]
 #[command(name = "magnum")]
@@ -12,15 +13,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Start the Crash Generator (Fake Exchange)
     Crash {
-        /// Port to run the proxy on
         #[arg(short, long, default_value_t = 8080)]
         port: u16,
     },
-    /// Analyze a liquidation event (The Pathologist)
     Analyze {
-        /// Path to the evidence CSV file
         #[arg(short, long)]
         file: String,
     },
@@ -29,37 +26,44 @@ enum Commands {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    // Путь к python в venv
-    let venv_python = "./venv/bin/python3";
-    
-    if !Path::new(venv_python).exists() {
-        eprintln!("CRITICAL ERROR: venv not found at {}. Please run 'python3 -m venv venv' first.", venv_python);
+    // ПОПРАВКА: Строим абсолютный путь к venv/bin/python3 БЕЗ canonicalize.
+    // canonicalize убивает контекст venv, превращая путь в системный /usr/bin/python
+    let cwd = std::env::current_dir()?;
+    let python_path = cwd.join("venv").join("bin").join("python3");
+
+    if !python_path.exists() {
+        eprintln!("CRITICAL ERROR: venv python not found at {:?}", python_path);
         std::process::exit(1);
     }
 
+    println!("[MAGNUM] Using Python Interpreter: {:?}", python_path);
+
     match cli.command {
         Commands::Crash { port } => {
-            println!("[MAGNUM] initializing CRASH GENERATOR on port {}...", port);
             println!("[MAGNUM] Target: localhost:{}", port);
             
-            let mut child = Command::new(venv_python)
+            let mut child = Command::new(&python_path)
                 .args(&["-m", "logos.proxies.binance_proxy"])
                 .env("PORT", port.to_string())
-                .current_dir("./vendor/logos")
+                .current_dir("./vendor/logos") 
                 .env("PYTHONPATH", ".")
                 .spawn()?;
 
             child.wait()?;
         }
         Commands::Analyze { file } => {
-            println!("[MAGNUM] initializing PATHOLOGIST...");
-            println!("[MAGNUM] Examining evidence: {}", file);
+            // Путь к файлу тоже делаем абсолютным
+            let file_path = Path::new(&file);
+            let abs_file_path = if file_path.is_absolute() {
+                file_path.to_path_buf()
+            } else {
+                cwd.join(file_path)
+            };
             
-            let abs_path = std::fs::canonicalize(&file).unwrap_or_else(|_| Path::new(&file).to_path_buf());
-            
-            // Внимание: Передаем файл как аргумент командной строки для Python
-            let status = Command::new(venv_python)
-                .args(&["-m", "logos.forensic_delegator", abs_path.to_str().unwrap()])
+            println!("[MAGNUM] Examining evidence: {:?}", abs_file_path);
+
+            let status = Command::new(&python_path)
+                .args(&["-m", "logos.forensic_delegator", abs_file_path.to_str().unwrap()])
                 .current_dir("./vendor/logos")
                 .env("PYTHONPATH", ".")
                 .status()?;
