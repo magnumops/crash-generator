@@ -1,24 +1,48 @@
-# Magnum: The Logos Adversarial Suite
+# 💀 Magnum Ops: Adversarial Trading Suite (v0.1.1)
 
-Magnum is a stress-testing tool for trading bots, powered by **Rust** (CLI), **Python** (Math Core), and **Z3** (Symbolic Reasoning).
+**Magnum** — это экосистема для стресс-тестирования торговых алгоритмов. Мы не просто тестируем на истории; мы создаем альтернативную реальность, где рынок пытается убить вашего бота.
 
-## Features
-1. **The Pathologist:** Forensics analysis of liquidation events. Proves "Liquidity Voids" using Z3.
-2. **The Crash Generator:** Local proxy server that injects synthetic Flash Crashes (Merton Model) into live market data.
+## ⚡ Быстрый Старт
 
-## Quick Start (Docker)
-
-No installation required. Just run:
+Вам нужен только **Docker**.
 
 ```bash
-# 1. Start the Crash Generator (Fake Exchange)
-docker compose up -d crash-generator
+# 1. Клонирование
+git clone --recursive https://github.com/magnumops/crash-generator.git
+cd crash-generator
 
-# 2. Attack your bot
-# Point your bot to http://localhost:8080
-# Enable crash mode: GET /api/v3/klines?...&crash_mode=true
-Manual Build
-code
-Bash
-git submodule update --init --recursive
-docker compose build
+# 2. Запуск (Система поднимется в фоновом режиме)
+docker compose up -d --build
+После запуска доступны:
+
+📡 Fake Exchange API: http://localhost:8080 (Вместо api.binance.com)
+🎛 Control Center (UI): http://localhost:8080/dashboard
+🎮 Режим 1: The Crash Generator (Симуляция)
+В этом режиме вы проверяете устойчивость живого бота.
+
+Настройка Бота: Переключите Base URL вашего бота на http://localhost:8080.
+Запуск: Запустите бота. Он начнет получать реальные рыночные данные через наш прокси.
+Атака:
+Откройте Control Center.
+Когда бот войдет в позицию, нажмите красную кнопку ACTIVATE CRASH.
+Система внедрит математическую модель катастрофы (Merton Jump-Diffusion), обвалив цену на ~10% за одну свечу.
+Результат: Проверьте, сработали ли стоп-лоссы.
+Где логи? Все данные сессии (реальные цены + внедренные аномалии) пишутся в папку logs/ внутри контейнера.
+
+🕵️ Режим 2: The Pathologist (Расследование)
+Если ваш бот был ликвидирован, используйте этот режим, чтобы доказать, что исполнение было нечестным.
+
+Как использовать:
+
+Возьмите CSV-файл с историей сделок вашего бота (формат: timestamp, symbol, side, price, qty).
+Положите файл в папку проекта (например, evidence.csv).
+Запустите анализ через Docker:
+docker compose run pathologist analyze --file /data/evidence.csv
+Вердикт Z3 Solver:
+
+✅ CLEAN: Исполнение математически корректно. Рынок был честным.
+🚨 LIQUIDITY_VOID_DETECTED: Найдено противоречие (UNSAT). Цена исполнения невозможна при текущей ликвидности. Это доказательство манипуляции.
+🗺 Roadmap
+v0.1.0 (Current): Web UI, WebSocket Telemetry, Z3 Sniper Core.
+v0.2.0 (Coming Soon): Генерация PDF-отчетов одной кнопкой, загрузка логов сессии через UI.
+Built with Rust, Python & Z3 by MagnumOps. 
