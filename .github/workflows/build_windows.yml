@@ -1,0 +1,41 @@
+name: Build Windows Binary
+
+on:
+  push:
+    tags:
+      - 'v*' # Срабатывает, когда ты создаешь тег версии (например, v0.2.2)
+  workflow_dispatch: # Позволяет запустить сборку вручную кнопкой
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive # Обязательно качаем подмодуль Logos
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: x86_64-pc-windows-msvc
+        override: true
+
+    - name: Build Binary
+      run: cargo build --release --verbose
+
+    - name: Prepare Artifact
+      run: |
+        mkdir release
+        copy target\release\magnum.exe release\magnum.exe
+        copy README.md release\README.txt
+        # Копируем Python-ядро, чтобы юзер мог его использовать
+        # (Хотя для работы без Docker им нужен будет Python, это отдельная история)
+        xcopy /E /I vendor release\vendor
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: magnum-windows-bundle
+        path: release/
