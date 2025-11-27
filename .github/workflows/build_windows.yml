@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v4  # Обновили до v4
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -26,14 +26,19 @@ jobs:
       run: cargo build --release --verbose
 
     - name: Prepare Artifact
+      shell: powershell
       run: |
-        mkdir release
-        copy target\release\magnum.exe release\magnum.exe
-        copy README.md release\README.txt
-        xcopy /E /I vendor release\vendor
+        New-Item -ItemType Directory -Force -Path release
+        Copy-Item -Path "target\release\magnum.exe" -Destination "release\magnum.exe"
+        Copy-Item -Path "README.md" -Destination "release\README.txt"
+        
+        # Копируем Python-код (исключая мусор)
+        New-Item -ItemType Directory -Force -Path release\vendor\logos
+        Copy-Item -Path "vendor\logos\logos" -Destination "release\vendor\logos" -Recurse
+        Copy-Item -Path "vendor\logos\requirements.txt" -Destination "release\vendor\logos\requirements.txt"
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4  # Обновили до v4
+      uses: actions/upload-artifact@v4
       with:
         name: magnum-windows-bundle
         path: release/
