@@ -66,3 +66,14 @@ docker compose up -d --build
 
 ---
 *Magnum Ops v0.2.6 // Built for those who survive.*
+
+---
+
+## 📡 Communication Channels
+
+Found a bug? Did your bot survive? Join the Red Team.
+
+* 🌐 **Web:** [crash.magnumops.com](https://crash.magnumops.com)
+* 💬 **Discord:** [Join Server](https://discord.gg/RjAQyQU9) — Main community hub
+* ✈️ **Telegram:** [@Ramil_MagnumOps](https://t.me/Ramil_MagnumOps) — Direct contact
+* 📧 **Email:** [ramil@magnumops.com](mailto:ramil@magnumops.com) — Business & Inquiries
